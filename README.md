@@ -1,40 +1,53 @@
-# Event Planner
+# SecDev Course Template
 
----
+Стартовый шаблон для студенческого репозитория (HSE SecDev 2025).
 
-##  Установка и запуск
-
-### 1. Клонирование репозитория
-```bash
-git clone https://github.com/hse-secdev-2025-fall/course-project-o7Techno/
-cd course-project-o7Techno
-```
-
-### 2. Создание виртуального окружения
-#### Windows (PowerShell):
+## Быстрый старт
 ```bash
 python -m venv .venv
-.venv\Scripts\Activate.ps1
-```
-#### Linux / macOS:
-```bash
-python -m venv .venv
-source .venv/bin/activate
+source .venv/bin/activate  # Windows: .venv\Scripts\Activate.ps1
+pip install -r requirements.txt -r requirements-dev.txt
+pre-commit install
+uvicorn app.main:app --reload
 ```
 
-### 3. Установка зависимостей
+## Ритуал перед PR
 ```bash
-pip install --upgrade pip
-pip install -r requirements.txt -r requirements-dev.txt || true
-pip install ruff black isort pytest pre-commit
-```
-
-### 4. Запуск приложения
-```bash
-python main.py
+ruff check --fix .
+black .
+isort .
+pytest -q
+pre-commit run --all-files
 ```
 
 ## Тесты
 ```bash
 pytest -q
 ```
+
+## CI
+В репозитории настроен workflow **CI** (GitHub Actions) — required check для `main`.
+Badge добавится автоматически после загрузки шаблона в GitHub.
+
+## Контейнеры
+```bash
+docker build -t secdev-app .
+docker run --rm -p 8000:8000 secdev-app
+# или
+docker compose up --build
+```
+
+## Эндпойнты
+- `GET /health` → `{"status": "ok"}`
+- `POST /items?name=...` — демо-сущность
+- `GET /items/{id}`
+
+## Формат ошибок
+Все ошибки — JSON-обёртка:
+```json
+{
+  "error": {"code": "not_found", "message": "item not found"}
+}
+```
+
+См. также: `SECURITY.md`, `.pre-commit-config.yaml`, `.github/workflows/ci.yml`.
