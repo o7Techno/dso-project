@@ -25,6 +25,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt -r requirements-dev.txt
 
+      - name: Verify python-multipart installation
+        run: |
+          pip show python-multipart || pip install python-multipart
+          python -c "import multipart; print('python-multipart OK')"
+
       - name: Lint & Format
         run: |
           ruff check --output-format=github .
