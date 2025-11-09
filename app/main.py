@@ -2,8 +2,8 @@ import os
 import re
 import time
 import uuid
-from decimal import Decimal
 from datetime import datetime, timezone
+from decimal import Decimal
 from typing import Dict, Optional
 
 import httpx
@@ -130,7 +130,9 @@ _DB = {"items": [], "events": []}
 
 class ItemCreate(BaseModel):
     model_config = dict(extra="forbid")
-    name: str = Field(min_length=1, max_length=100, pattern="^[a-zA-Z0-9\\s\\-_.,!?()]+$")
+    name: str = Field(
+        min_length=1, max_length=100, pattern="^[a-zA-Z0-9\\s\\-_.,!?()]+$"
+    )
 
     @field_validator("name")
     @classmethod
@@ -160,7 +162,9 @@ class EventCreate(BaseModel):
     description: Optional[str] = Field(default=None, max_length=1000)
     event_date: datetime
     location: str = Field(min_length=1, max_length=200)
-    price: Optional[Decimal] = Field(default=None, gt=0, max_digits=12, decimal_places=2)
+    price: Optional[Decimal] = Field(
+        default=None, gt=0, max_digits=12, decimal_places=2
+    )
 
     @field_validator("event_date")
     @classmethod
@@ -229,7 +233,7 @@ os.makedirs(SAFE_UPLOAD_DIR, exist_ok=True)
 
 MAGIC_BYTES = {
     "image/png": b"\x89PNG\r\n\x1a\n",
-    "image/jpeg": b"\xFF\xD8\xFF",
+    "image/jpeg": b"\xff\xd8\xff",
     "application/pdf": b"%PDF",
 }
 
@@ -328,7 +332,7 @@ def safe_http_request(
         except (httpx.TimeoutException, httpx.ConnectError, httpx.ReadError) as e:
             last_exception = e
             if attempt < HTTP_MAX_RETRIES:
-                backoff_time = HTTP_RETRY_BACKOFF_BASE * (2 ** attempt)
+                backoff_time = HTTP_RETRY_BACKOFF_BASE * (2**attempt)
                 time.sleep(backoff_time)
             else:
                 raise
@@ -337,7 +341,7 @@ def safe_http_request(
                 raise
             last_exception = e
             if attempt < HTTP_MAX_RETRIES:
-                backoff_time = HTTP_RETRY_BACKOFF_BASE * (2 ** attempt)
+                backoff_time = HTTP_RETRY_BACKOFF_BASE * (2**attempt)
                 time.sleep(backoff_time)
             else:
                 raise
