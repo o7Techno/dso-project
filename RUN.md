@@ -184,4 +184,3 @@ mypy app/
   "correlation_id": "uuid-here"
 }
 ```
-

@@ -2,9 +2,9 @@
 Тесты валидации входных данных (контроль 1).
 Негативные тесты для проверки защиты от инъекций и некорректных данных.
 """
+
 import json
 from datetime import datetime, timedelta, timezone
-from decimal import Decimal
 
 from fastapi.testclient import TestClient
 
@@ -20,7 +20,10 @@ def test_item_xss_attempt_rejected():
     assert r.status_code == 422
     body = r.json()
     assert body["type"].endswith("#validation_error")
-    assert "dangerous characters" in str(body.get("errors", {})).lower() or "validation" in body.get("detail", "").lower()
+    assert (
+        "dangerous characters" in str(body.get("errors", {})).lower()
+        or "validation" in body.get("detail", "").lower()
+    )
 
 
 def test_item_sql_injection_attempt_rejected():
@@ -117,7 +120,10 @@ def test_event_past_date_rejected():
     assert r.status_code == 422
     body = r.json()
     assert body["type"].endswith("#validation_error")
-    assert "past" in body.get("detail", "").lower() or "past" in str(body.get("errors", {})).lower()
+    assert (
+        "past" in body.get("detail", "").lower()
+        or "past" in str(body.get("errors", {})).lower()
+    )
 
 
 def test_event_float_price_precision_issue():
@@ -172,13 +178,17 @@ def test_event_price_too_many_decimal_places_rejected():
     """Негативный тест: слишком много знаков после запятой должно быть отклонено."""
     future_date = (datetime.now(timezone.utc) + timedelta(days=1)).isoformat()
     # Парсим как строку, чтобы избежать float погрешности
-    payload_json = json.dumps({
-        "title": "Event",
-        "event_date": future_date,
-        "location": "Somewhere",
-        "price": "10.999",  # 3 знака после запятой, максимум 2
-    })
-    r = client.post("/events", data=payload_json, headers={"Content-Type": "application/json"})
+    payload_json = json.dumps(
+        {
+            "title": "Event",
+            "event_date": future_date,
+            "location": "Somewhere",
+            "price": "10.999",  # 3 знака после запятой, максимум 2
+        }
+    )
+    r = client.post(
+        "/events", data=payload_json, headers={"Content-Type": "application/json"}
+    )
     assert r.status_code == 422
     body = r.json()
     assert body["type"].endswith("#validation_error")
@@ -195,7 +205,7 @@ def test_event_duplicate_rejected():
     # Создаем первое событие
     r1 = client.post("/events", json=payload)
     assert r1.status_code == 200
-    
+
     # Пытаемся создать дубликат
     r2 = client.post("/events", json=payload)
     assert r2.status_code == 409
@@ -236,16 +246,18 @@ def test_event_valid_accepted():
 
 def test_http_client_timeout_handling():
     """Негативный тест: HTTP клиент должен обрабатывать таймауты."""
+    from unittest.mock import MagicMock, patch
+
     import httpx
-    from unittest.mock import patch, MagicMock
-    
+
     # Мокаем таймаут
     with patch("httpx.Client") as mock_client_class:
         mock_client = MagicMock()
         mock_client_class.return_value.__enter__.return_value = mock_client
         mock_client.request.side_effect = httpx.TimeoutException("Request timed out")
-        
+
         from app.main import safe_http_request
+
         # Должен сделать несколько попыток с backoff
         try:
             safe_http_request("GET", "http://example.com")
@@ -257,22 +269,24 @@ def test_http_client_timeout_handling():
 
 def test_http_client_retry_on_5xx():
     """Негативный тест: HTTP клиент должен ретраить на 5xx ошибки."""
+    from unittest.mock import MagicMock, patch
+
     import httpx
-    from unittest.mock import patch, MagicMock
-    
+
     # Мокаем httpx для симуляции 5xx ошибок
     mock_response = MagicMock()
     mock_response.status_code = 500
     mock_response.raise_for_status.side_effect = httpx.HTTPStatusError(
         "Server Error", request=MagicMock(), response=mock_response
     )
-    
+
     with patch("httpx.Client") as mock_client_class:
         mock_client = MagicMock()
         mock_client_class.return_value.__enter__.return_value = mock_client
         mock_client.request.return_value = mock_response
-        
+
         from app.main import safe_http_request
+
         # Должен сделать несколько попыток
         try:
             safe_http_request("GET", "http://example.com")
@@ -284,25 +298,26 @@ def test_http_client_retry_on_5xx():
 
 def test_http_client_no_retry_on_4xx():
     """Негативный тест: HTTP клиент НЕ должен ретраить на 4xx ошибки."""
+    from unittest.mock import MagicMock, patch
+
     import httpx
-    from unittest.mock import patch, MagicMock
-    
+
     mock_response = MagicMock()
     mock_response.status_code = 404
     mock_response.raise_for_status.side_effect = httpx.HTTPStatusError(
         "Not Found", request=MagicMock(), response=mock_response
     )
-    
+
     with patch("httpx.Client") as mock_client_class:
         mock_client = MagicMock()
         mock_client_class.return_value.__enter__.return_value = mock_client
         mock_client.request.return_value = mock_response
-        
+
         from app.main import safe_http_request
+
         try:
             safe_http_request("GET", "http://example.com")
         except httpx.HTTPStatusError:
             pass
         # Должна быть только одна попытка для 4xx
         assert mock_client.request.call_count == 1
-

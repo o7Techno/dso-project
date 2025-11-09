@@ -2,7 +2,7 @@
 Простой скрипт для тестирования API вручную.
 Запустите приложение (uvicorn app.main:app) и затем этот скрипт.
 """
-import json
+
 from datetime import datetime, timedelta, timezone
 
 import httpx
@@ -79,7 +79,9 @@ def test_create_event_past_date():
 
 def test_create_event_negative_price():
     """Попытка создать событие с отрицательной ценой (должна быть отклонена)"""
-    print("\n=== Тест 7: Попытка создать событие с отрицательной ценой (должна быть отклонена) ===")
+    print(
+        "\n=== Тест 7: Попытка создать событие с отрицательной ценой (должна быть отклонена) ==="
+    )
     future_date = (datetime.now(timezone.utc) + timedelta(days=1)).isoformat()
     payload = {
         "title": "Event",
@@ -104,7 +106,7 @@ if __name__ == "__main__":
     print("=" * 60)
     print("Тестирование API безопасности")
     print("=" * 60)
-    
+
     try:
         test_health()
         test_create_item_valid()
@@ -114,7 +116,7 @@ if __name__ == "__main__":
         test_create_event_past_date()
         test_create_event_negative_price()
         test_external_health()
-        
+
         print("\n" + "=" * 60)
         print("Все тесты выполнены!")
         print("=" * 60)
@@ -123,4 +125,3 @@ if __name__ == "__main__":
         print("Убедитесь, что приложение запущено на http://127.0.0.1:8000")
     finally:
         client.close()
-

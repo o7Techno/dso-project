@@ -70,7 +70,10 @@ def test_upload_path_traversal_attempt():
     r = client.post("/upload", files=files)
     # Файл должен быть сохранен под UUID, но проверяем что нет ошибки path traversal
     # В реальности имя файла игнорируется, но проверяем что система работает
-    assert r.status_code in [200, 422]  # Может быть отклонен или принят с безопасным именем
+    assert r.status_code in [
+        200,
+        422,
+    ]  # Может быть отклонен или принят с безопасным именем
     if r.status_code == 200:
         body = r.json()
         # Имя файла должно быть UUID, а не оригинальное
@@ -81,7 +84,7 @@ def test_upload_path_traversal_attempt():
 def test_upload_jpeg_with_png_header():
     """Негативный тест: JPEG файл с заявленным PNG content-type должен быть отклонен."""
     # JPEG magic bytes
-    jpeg_data = b"\xFF\xD8\xFF\xE0" + b"0" * 60
+    jpeg_data = b"\xff\xd8\xff\xe0" + b"0" * 60
     files = {"file": ("fake.png", jpeg_data, "image/png")}
     r = client.post("/upload", files=files)
     assert r.status_code == 422
