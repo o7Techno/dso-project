@@ -3,16 +3,17 @@ FROM python:3.11-slim AS build
 WORKDIR /build
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    gcc \
-    && rm -rf /var/lib/apt/lists/*
+    apt-get install -y --no-install-recommends gcc=12.2.0-14 && \
+    rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt requirements-dev.txt ./
+
 RUN pip install --no-cache-dir --upgrade "pip==24.0" && \
     pip install --no-cache-dir -r requirements.txt -r requirements-dev.txt
 
 COPY . .
 RUN python -m pytest -q || true
+
 
 FROM python:3.11-slim AS runtime
 
