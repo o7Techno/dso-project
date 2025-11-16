@@ -1,17 +1,90 @@
+# Git
 .git
 .gitignore
 .gitattributes
+.git/
+
+# Python
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
-*.sqlite
-*.db
-.venv/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
 dist/
 build/
+.eggs/
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Testing
 .pytest_cache/
 .coverage
+.coverage.*
 htmlcov/
-node_modules/
+.tox/
+.hypothesis/
+.pytest_cache/
+test-results/
+*.cover
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-project
+*.sublime-workspace
+
+# Environment
 .env
+.env.local
+.env.*.local
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+.circleci/
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+compose.yaml
+.dockerignore
+
+# Logs
+*.log
+logs/
+
+# Database
+*.sqlite
+*.sqlite3
+*.db
+
+# Node (if any)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+.cache/

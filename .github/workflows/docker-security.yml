@@ -1,0 +1,134 @@
+name: Docker Security Scan
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+  workflow_dispatch:
+
+jobs:
+  hadolint:
+    name: Lint Dockerfile
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Hadolint
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: Dockerfile
+          failure-threshold: warning
+          format: sarif
+          output-file: hadolint-results.sarif
+
+      - name: Upload Hadolint results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: hadolint-results.sarif
+
+  trivy-scan:
+    name: Security Scan with Trivy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        run: docker compose build
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: dso-project-app:latest
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '1'
+          ignore-unfixed: false
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy-results.sarif
+
+      - name: Generate Trivy report
+        uses: aquasecurity/trivy-action@master
+        continue-on-error: true
+        with:
+          image-ref: dso-project-app:latest
+          format: 'table'
+          output: 'trivy-report.txt'
+          severity: 'CRITICAL,HIGH,MEDIUM,LOW'
+
+      - name: Upload Trivy report as artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: trivy-security-report
+          path: trivy-report.txt
+          retention-days: 30
+
+  container-tests:
+    name: Container Security Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        run: docker compose build
+
+      - name: Start container
+        run: docker compose up -d
+
+      - name: Check non-root user
+        run: |
+          user_id=$(docker compose run --rm app id -u)
+          if [ "$user_id" != "1000" ]; then
+            echo "ERROR: Container runs as user ID $user_id, expected 1000"
+            exit 1
+          fi
+          echo "✓ Container runs as non-root user (UID: $user_id)"
+
+      - name: Check container health
+        run: |
+          timeout=60
+          while [ $timeout -gt 0 ]; do
+            health=$(docker inspect --format='{{.State.Health.Status}}' event-planner-app 2>/dev/null || echo "starting")
+            if [ "$health" = "healthy" ]; then
+              echo "✓ Container is healthy"
+              exit 0
+            fi
+            echo "Waiting for container to become healthy... ($health)"
+            sleep 5
+            timeout=$((timeout-5))
+          done
+          echo "✗ Container did not become healthy"
+          docker compose logs app
+          exit 1
+
+      - name: Test API endpoint
+        run: |
+          response=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/health)
+          if [ "$response" != "200" ]; then
+            echo "ERROR: API endpoint returned HTTP $response"
+            exit 1
+          fi
+          echo "✓ API endpoint responds correctly (HTTP $response)"
+
+      - name: Cleanup
+        if: always()
+        run: docker compose down -v

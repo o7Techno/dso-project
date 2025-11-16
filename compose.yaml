@@ -1,8 +1,49 @@
 services:
   app:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: dso-project-app:latest
+    container_name: event-planner-app
     ports:
-      - "8000:8000"
+      - "${APP_PORT:-8000}:8000"
     environment:
       - PYTHONUNBUFFERED=1
-    profiles: ["dev"]
+      - PYTHONDONTWRITEBYTECODE=1
+      - HTTP_TIMEOUT_CONNECT=${HTTP_TIMEOUT_CONNECT:-1.0}
+      - HTTP_TIMEOUT_READ=${HTTP_TIMEOUT_READ:-4.0}
+      - HTTP_TIMEOUT_WRITE=${HTTP_TIMEOUT_WRITE:-4.0}
+      - HTTP_TIMEOUT_POOL=${HTTP_TIMEOUT_POOL:-5.0}
+      - HTTP_MAX_RETRIES=${HTTP_MAX_RETRIES:-2}
+      - HTTP_RETRY_BACKOFF_BASE=${HTTP_RETRY_BACKOFF_BASE:-0.1}
+      - EXTERNAL_HEALTH_URL=${EXTERNAL_HEALTH_URL:-https://httpbin.org/status/200}
+    env_file:
+      - .env
+    volumes:
+      - ./app/uploads:/app/uploads:rw
+    networks:
+      - app-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    # Security hardening
+    security_opt:
+      - no-new-privileges:true
+      # seccomp=./docker/seccomp-profile.json  # Temporarily disabled - too restrictive for Windows Docker
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    read_only: false  # Set to false because uploads directory needs to be writable
+    tmpfs:
+      - /tmp:noexec,nosuid,size=100m
+    # User and group
+    user: "1000:1000"
+
+networks:
+  app-network:
+    driver: bridge
