@@ -3,7 +3,7 @@ FROM python:3.11-slim AS build
 WORKDIR /build
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends gcc=12.2.0-14 && \
+    apt-get install -y --no-install-recommends build-essential=12.10 && \
     rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt requirements-dev.txt ./
