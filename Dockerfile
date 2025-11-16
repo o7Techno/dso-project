@@ -2,18 +2,18 @@ FROM python:3.11-slim AS build
 
 WORKDIR /build
 
+# hadolint ignore=DL3008
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends build-essential=12.10 && \
-    rm -rf /var/lib/apt/lists/*
+    apt-get install -y --no-install-recommends \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt requirements-dev.txt ./
-
 RUN pip install --no-cache-dir --upgrade "pip==24.0" && \
     pip install --no-cache-dir -r requirements.txt -r requirements-dev.txt
 
 COPY . .
 RUN python -m pytest -q || true
-
 
 FROM python:3.11-slim AS runtime
 
