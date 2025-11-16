@@ -29,6 +29,10 @@ jobs:
         with:
           sarif_file: hadolint-results.sarif
 
+      - name: Show hadolint issues
+        run: cat hadolint-results.sarif
+        if: always()
+
   trivy-scan:
     name: Security Scan with Trivy
     runs-on: ubuntu-latest
