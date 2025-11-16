@@ -19,6 +19,7 @@ services:
       - EXTERNAL_HEALTH_URL=${EXTERNAL_HEALTH_URL:-https://httpbin.org/status/200}
     env_file:
       - .env
+    # Note: .env file is optional - all variables have defaults
     volumes:
       - ./app/uploads:/app/uploads:rw
     networks:
