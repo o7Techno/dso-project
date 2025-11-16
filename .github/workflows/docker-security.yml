@@ -111,7 +111,7 @@ jobs:
 
       - name: Check non-root user
         run: |
-          user_id=$(docker compose run --rm app id -u)
+          user_id=$(docker compose exec -T app id -u)
           if [ "$user_id" != "1000" ]; then
             echo "ERROR: Container runs as user ID $user_id, expected 1000"
             exit 1

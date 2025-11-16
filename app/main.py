@@ -8,6 +8,7 @@ from typing import Dict, Optional
 
 import httpx
 from fastapi import FastAPI, File, HTTPException, Request, UploadFile
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, ValidationError, field_validator
@@ -101,6 +102,24 @@ async def http_exception_handler(request: Request, exc: HTTPException):
         title="HTTP error",
         status_code=exc.status_code,
         detail=detail,
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def request_validation_error_handler(
+    request: Request, exc: RequestValidationError
+):
+    errors = {}
+    for error in exc.errors():
+        field = ".".join(str(loc) for loc in error["loc"])
+        errors[field] = error["msg"]
+    return problem_response(
+        request,
+        code="validation_error",
+        title="Request validation error",
+        status_code=422,
+        detail="Input validation failed",
+        errors=errors,
     )
 
 
