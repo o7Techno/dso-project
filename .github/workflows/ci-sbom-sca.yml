@@ -34,14 +34,14 @@ jobs:
 
       - name: Generate SBOM (Syft CycloneDX)
         run: |
-          docker run --rm -v $PWD:/work -w /work anchore/syft:v1.20.0 \
+          docker run --rm -v $PWD:/work -w /work anchore/syft:latest \
             packages dir:. -o cyclonedx-json --file EVIDENCE/P09/sbom.json
 
       - name: SCA Scan (Grype)
         run: |
           set -e
-          docker run --rm -v $PWD:/work -w /work anchore/grype:v0.74.2 \
-            sbom:cyclonedx-json:/work/EVIDENCE/P09/sbom.json -o json > EVIDENCE/P09/sca_report.json
+          docker run --rm -v $PWD:/work -w /work anchore/grype:latest \
+            sbom:/work/EVIDENCE/P09/sbom.json -o json > EVIDENCE/P09/sca_report.json
           echo "# SCA summary" > EVIDENCE/P09/sca_summary.md
           jq '[.matches[].vulnerability.severity] | group_by(.) | map({(.[0]): length}) | add' \
             EVIDENCE/P09/sca_report.json >> EVIDENCE/P09/sca_summary.md || true

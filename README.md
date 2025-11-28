@@ -72,6 +72,6 @@ docker compose run --rm app python -m pytest -q
 
 ## Security automation (P09)
 
-- Workflow `Security - SBOM & SCA` в `.github/workflows/ci-sbom-sca.yml` автоматически генерирует SBOM (Syft → CycloneDX JSON через `-o cyclonedx-json --file <path>`) и запускает SCA (Grype по `sbom:cyclonedx-json:/work/...`) при `push`/`pull_request` по Python-зависимостям и вручную через `workflow_dispatch`.
+- Workflow `Security - SBOM & SCA` в `.github/workflows/ci-sbom-sca.yml` автоматически генерирует SBOM (Syft → CycloneDX JSON через `-o cyclonedx-json --file <path>`) и запускает SCA (Grype, `sbom:/work/...`, версии синхронизируются за счёт `anchore/*:latest`) при `push`/`pull_request` по Python-зависимостям и вручную через `workflow_dispatch`.
 - Все артефакты проверки складываются в `EVIDENCE/P09/`: `sbom.json`, `sca_report.json`, `sca_summary.md` и доступны в GitHub Actions как артефакт `P09_EVIDENCE`.
 - Для исключений по уязвимостям используйте `policy/waivers.yml` (структура совместима с описанием из `project/69_sbom-vuln-mgmt.md`); записи согласовываются через issue/PR.
