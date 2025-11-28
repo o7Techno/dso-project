@@ -35,9 +35,9 @@ jobs:
       - name: Generate SBOM (Syft CycloneDX + Syft JSON)
         run: |
           docker run --rm -v $PWD:/work -w /work anchore/syft:v1.20.0 \
-            packages dir:. -o cyclonedx-json=EVIDENCE/P09/sbom.json
+            packages dir:. -o cyclonedx-json --file EVIDENCE/P09/sbom.json
           docker run --rm -v $PWD:/work -w /work anchore/syft:v1.20.0 \
-            packages dir:. -o syft-json=EVIDENCE/P09/sbom.syft.json
+            packages dir:. -o syft-json --file EVIDENCE/P09/sbom.syft.json
 
       - name: SCA Scan (Grype)
         run: |
