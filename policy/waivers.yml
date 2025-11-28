@@ -1,0 +1,15 @@
+# policy/waivers.yml — шаблонный файл исключений для SBOM & SCA практики
+# См. project/69_sbom-vuln-mgmt.md и docs/security-nfr/NFR_TRACEABILITY.md для деталей политики.
+
+waivers: []
+
+# Пример рабочей записи:
+# waivers:
+#   - id: "CVE-2024-XXXX"
+#     package: "example-lib"
+#     version: "1.2.3"
+#     severity: "High"
+#     reason: "Транзитивная зависимость; нет официального фикса; компонент не выходит в прод."
+#     issue: "https://github.com/<org>/<repo>/issues/123"
+#     expires_at: "2025-12-31"
+#     approved_by: "security@example.org"
