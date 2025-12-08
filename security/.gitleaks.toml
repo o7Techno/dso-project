@@ -1,0 +1,19 @@
+title = "course project gitleaks config"
+
+[extend]
+# use default built-in rules
+
+[allowlist]
+description = "ignore non-sensitive generated artifacts and known test strings"
+paths = [
+  "EVIDENCE/", # reports and evidence artifacts
+]
+commits = []
+regexes = [
+  '''TEST_SECRET_DO_NOT_USE''',
+]
+
+  [[allowlist.rules]]
+  description = "false positive: UUIDs used in docs/tests as correlation ids"
+  regex = '''[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}'''
+  paths = ["docs/", "tests/"]
