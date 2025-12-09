@@ -43,8 +43,18 @@ jobs:
           docker run --rm -v $PWD:/work -w /work anchore/grype:v0.104.1 \
             sbom:/work/EVIDENCE/P09/sbom.json -o json > EVIDENCE/P09/sca_report.json
           echo "# SCA summary" > EVIDENCE/P09/sca_summary.md
-          jq '[.matches[].vulnerability.severity] | group_by(.) | map({(.[0]): length}) | add' \
-            EVIDENCE/P09/sca_report.json >> EVIDENCE/P09/sca_summary.md || true
+          echo "" >> EVIDENCE/P09/sca_summary.md
+          echo "## Severity distribution" >> EVIDENCE/P09/sca_summary.md
+          echo "" >> EVIDENCE/P09/sca_summary.md
+          jq '[.matches[].vulnerability.severity] | group_by(.) | map({(.[0]): length}) | add // {}' \
+            EVIDENCE/P09/sca_report.json >> EVIDENCE/P09/sca_summary.md || echo "{}" >> EVIDENCE/P09/sca_summary.md
+          echo "" >> EVIDENCE/P09/sca_summary.md
+          echo "## Notes" >> EVIDENCE/P09/sca_summary.md
+          echo "- Summary auto-generated from Grype report" >> EVIDENCE/P09/sca_summary.md
+          echo "" >> EVIDENCE/P09/sca_summary.md
+          echo "## Scan metadata" >> EVIDENCE/P09/sca_summary.md
+          echo "- Scanner: Grype v0.104.1" >> EVIDENCE/P09/sca_summary.md
+          echo "- SBOM source: Syft v1.38.0 (CycloneDX JSON)" >> EVIDENCE/P09/sca_summary.md
 
       - name: Upload SBOM/SCA evidence
         if: always()

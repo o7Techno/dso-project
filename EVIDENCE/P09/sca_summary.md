@@ -3,7 +3,7 @@
 ## Severity distribution
 
 ```json
-null
+{}
 ```
 
 ## Notes
