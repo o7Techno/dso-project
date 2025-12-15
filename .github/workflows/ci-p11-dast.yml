@@ -71,13 +71,15 @@ jobs:
 
       - name: ZAP Baseline scan
         run: |
+          mkdir -p EVIDENCE/P11
           docker run --rm --network host -v "$PWD:/zap/wrk:rw" \
             owasp/zap2docker-stable zap-baseline.py \
               -t "$TARGET_URL" \
               -r /zap/wrk/EVIDENCE/P11/zap_baseline.html \
               -J /zap/wrk/EVIDENCE/P11/zap_baseline.json \
-              -m 5 \
-              -I || true
+              -m 10 \
+              -I -d > EVIDENCE/P11/zap_baseline.log 2>&1 || true
+          ls -la EVIDENCE/P11
 
       - name: Collect app logs
         if: always()
@@ -93,6 +95,9 @@ jobs:
           fi
           if [ ! -f EVIDENCE/P11/zap_baseline.json ]; then
             echo '{"note": "ZAP report not produced (target may have been unreachable). See workflow logs."}' > EVIDENCE/P11/zap_baseline.json
+          fi
+          if [ ! -f EVIDENCE/P11/zap_baseline.log ]; then
+            echo "ZAP log missing; see workflow step output" > EVIDENCE/P11/zap_baseline.log
           fi
           ls -la EVIDENCE/P11
 
