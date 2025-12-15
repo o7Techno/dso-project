@@ -53,7 +53,7 @@ jobs:
 
       - name: Wait for service health
         run: |
-          for i in $(seq 1 30); do
+          for i in $(seq 1 60); do
             if curl -sf "$HEALTH_URL" >/dev/null; then
               echo "Service is healthy"
               exit 0
@@ -65,6 +65,10 @@ jobs:
           docker compose -f compose.yaml logs app || true
           exit 1
 
+      - name: Smoke check service
+        run: |
+          curl -v --max-time 5 "$HEALTH_URL"
+
       - name: ZAP Baseline scan
         run: |
           docker run --rm --network host -v "$PWD:/zap/wrk:rw" \
@@ -74,6 +78,12 @@ jobs:
               -J /zap/wrk/EVIDENCE/P11/zap_baseline.json \
               -m 5 \
               -I || true
+
+      - name: Collect app logs
+        if: always()
+        run: |
+          mkdir -p EVIDENCE/P11
+          docker compose -f compose.yaml logs app > EVIDENCE/P11/app.log 2>&1 || true
 
       - name: Collect evidence (ensure reports exist)
         run: |
