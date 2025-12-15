@@ -87,8 +87,8 @@ jobs:
           docker run --rm --network host -v "$PWD:/zap/wrk:rw" \
             "$ZAP_IMG" zap-baseline.py \
               -t "$TARGET_URL" \
-              -r /zap/wrk/EVIDENCE/P11/zap_baseline.html \
-              -J /zap/wrk/EVIDENCE/P11/zap_baseline.json \
+              -r EVIDENCE/P11/zap_baseline.html \
+              -J EVIDENCE/P11/zap_baseline.json \
               -m 10 \
               -I -d > EVIDENCE/P11/zap_baseline.log 2>&1 || true
           ls -la EVIDENCE/P11
