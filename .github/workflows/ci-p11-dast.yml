@@ -32,6 +32,7 @@ jobs:
     env:
       TARGET_URL: http://localhost:8000
       HEALTH_URL: http://localhost:8000/health
+      ZAP_IMAGE: ghcr.io/zaproxy/zaproxy:stable
 
     steps:
       - name: Checkout
@@ -69,11 +70,22 @@ jobs:
         run: |
           curl -v --max-time 5 "$HEALTH_URL"
 
+      - name: Pull ZAP image
+        run: |
+          docker pull "$ZAP_IMAGE" || (
+            echo "Primary pull failed, retrying from Docker Hub mirror..." &&
+            docker pull owasp/zap2docker-stable
+          )
+
       - name: ZAP Baseline scan
         run: |
           mkdir -p EVIDENCE/P11
+          ZAP_IMG="$ZAP_IMAGE"
+          if ! docker image inspect "$ZAP_IMG" >/dev/null 2>&1; then
+            ZAP_IMG="owasp/zap2docker-stable"
+          fi
           docker run --rm --network host -v "$PWD:/zap/wrk:rw" \
-            owasp/zap2docker-stable zap-baseline.py \
+            "$ZAP_IMG" zap-baseline.py \
               -t "$TARGET_URL" \
               -r /zap/wrk/EVIDENCE/P11/zap_baseline.html \
               -J /zap/wrk/EVIDENCE/P11/zap_baseline.json \
