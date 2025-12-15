@@ -75,6 +75,12 @@ jobs:
               -m 5 \
               -I || true
 
+      - name: Ensure evidence files exist
+        run: |
+          mkdir -p EVIDENCE/P11
+          touch EVIDENCE/P11/.gitkeep
+          ls -la EVIDENCE/P11
+
       - name: Upload DAST evidence
         if: always()
         uses: actions/upload-artifact@v4
