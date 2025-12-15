@@ -37,6 +37,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Prepare env file
+        run: |
+          if [ -f .env.example ]; then
+            cp .env.example .env
+          else
+            touch .env
+          fi
+
       - name: Ensure evidence dir
         run: mkdir -p EVIDENCE/P11
 
