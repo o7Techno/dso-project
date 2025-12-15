@@ -1,0 +1,79 @@
+name: Security - DAST (ZAP Baseline)
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "app/**"
+      - "Dockerfile"
+      - "compose.yaml"
+      - "requirements*.txt"
+      - ".github/workflows/ci-p11-dast.yml"
+  pull_request:
+    paths:
+      - "app/**"
+      - "Dockerfile"
+      - "compose.yaml"
+      - "requirements*.txt"
+      - ".github/workflows/ci-p11-dast.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  dast:
+    name: ZAP Baseline
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      TARGET_URL: http://localhost:8000
+      HEALTH_URL: http://localhost:8000/health
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ensure evidence dir
+        run: mkdir -p EVIDENCE/P11
+
+      - name: Build & start service (Docker Compose)
+        run: docker compose -f compose.yaml up -d --build
+
+      - name: Wait for service health
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf "$HEALTH_URL" >/dev/null; then
+              echo "Service is healthy"
+              exit 0
+            fi
+            echo "Waiting for service..."
+            sleep 2
+          done
+          echo "Service failed to become healthy"
+          docker compose -f compose.yaml logs app || true
+          exit 1
+
+      - name: ZAP Baseline scan
+        run: |
+          docker run --rm --network host -v "$PWD:/zap/wrk:rw" \
+            owasp/zap2docker-stable zap-baseline.py \
+              -t "$TARGET_URL" \
+              -r /zap/wrk/EVIDENCE/P11/zap_baseline.html \
+              -J /zap/wrk/EVIDENCE/P11/zap_baseline.json \
+              -m 5 \
+              -I || true
+
+      - name: Upload DAST evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: P11_EVIDENCE
+          path: EVIDENCE/P11
+
+      - name: Stop service
+        if: always()
+        run: docker compose -f compose.yaml down --remove-orphans
