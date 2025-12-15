@@ -14,6 +14,6 @@ regexes = [
 ]
 
   [[allowlist.rules]]
-  description = "false positive: UUIDs used in docs/tests as correlation ids"
+  description = "false positive: UUIDs used in docs/tests as correlation ids (not secrets)"
   regex = '''[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}'''
   paths = ["docs/", "tests/"]
