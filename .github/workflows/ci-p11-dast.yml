@@ -75,10 +75,15 @@ jobs:
               -m 5 \
               -I || true
 
-      - name: Ensure evidence files exist
+      - name: Collect evidence (ensure reports exist)
         run: |
           mkdir -p EVIDENCE/P11
-          touch EVIDENCE/P11/.gitkeep
+          if [ ! -f EVIDENCE/P11/zap_baseline.html ]; then
+            echo "<html><body><p>ZAP report not produced (target may have been unreachable). See workflow logs.</p></body></html>" > EVIDENCE/P11/zap_baseline.html
+          fi
+          if [ ! -f EVIDENCE/P11/zap_baseline.json ]; then
+            echo '{"note": "ZAP report not produced (target may have been unreachable). See workflow logs."}' > EVIDENCE/P11/zap_baseline.json
+          fi
           ls -la EVIDENCE/P11
 
       - name: Upload DAST evidence
