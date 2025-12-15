@@ -1,0 +1,29 @@
+rules:
+  # Project-specific FastAPI response guard against unsafe HTML string interpolation
+  - id: fastapi-htmlresponse-unsanitized
+    languages: [python]
+    message: "Avoid embedding unsanitized user input into HTMLResponse; prefer templating with escaping."
+    severity: WARNING
+    patterns:
+      - pattern: HTMLResponse(f"...$X...")
+    metadata:
+      category: security
+      cwe: "CWE-79: Cross-site Scripting"
+      references:
+        - https://cwe.mitre.org/data/definitions/79.html
+
+  # Forbid disabling TLS verification in outbound httpx requests/clients
+  - id: httpx-insecure-disable-verify
+    languages: [python]
+    message: "Do not disable TLS certificate verification in httpx; set proper CA bundle instead."
+    severity: ERROR
+    pattern-either:
+      - pattern: httpx.request(..., verify=False, ...)
+      - pattern: httpx.get(..., verify=False, ...)
+      - pattern: httpx.post(..., verify=False, ...)
+      - pattern: httpx.Client(verify=False, ...)
+    metadata:
+      category: security
+      cwe: "CWE-295: Improper Certificate Validation"
+      references:
+        - https://cwe.mitre.org/data/definitions/295.html
