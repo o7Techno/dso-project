@@ -47,7 +47,9 @@ jobs:
           fi
 
       - name: Ensure evidence dir
-        run: mkdir -p EVIDENCE/P11
+        run: |
+          mkdir -p EVIDENCE/P11
+          chmod -R 777 EVIDENCE
 
       - name: Build & start service (Docker Compose)
         run: docker compose -f compose.yaml up -d --build
@@ -84,7 +86,7 @@ jobs:
           if ! docker image inspect "$ZAP_IMG" >/dev/null 2>&1; then
             ZAP_IMG="owasp/zap2docker-stable"
           fi
-          docker run --rm --network host -v "$PWD:/zap/wrk:rw" \
+          docker run --rm --network host -u 0:0 -v "$PWD:/zap/wrk:rw" \
             "$ZAP_IMG" zap-baseline.py \
               -t "$TARGET_URL" \
               -r EVIDENCE/P11/zap_baseline.html \
