@@ -91,6 +91,7 @@ jobs:
               -t "$TARGET_URL" \
               -r EVIDENCE/P11/zap_baseline.html \
               -J EVIDENCE/P11/zap_baseline.json \
+              -c security/zap-baseline.conf \
               -m 10 \
               -I -d > EVIDENCE/P11/zap_baseline.log 2>&1 || true
           ls -la EVIDENCE/P11
