@@ -154,6 +154,33 @@ def health():
     return {"status": "ok"}
 
 
+@app.get("/robots.txt")
+def robots():
+    return Response(
+        content="User-agent: *\nDisallow: /",
+        media_type="text/plain",
+        headers={
+            "Cache-Control": "no-store, no-cache, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0",
+        },
+    )
+
+
+@app.get("/sitemap.xml")
+def sitemap():
+    xml = '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>'
+    return Response(
+        content=xml,
+        media_type="application/xml",
+        headers={
+            "Cache-Control": "no-store, no-cache, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0",
+        },
+    )
+
+
 _DB = {"items": [], "events": []}
 
 
