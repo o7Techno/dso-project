@@ -1,0 +1,12 @@
+event-planner-app  | INFO:     Started server process [1]
+event-planner-app  | INFO:     Waiting for application startup.
+event-planner-app  | INFO:     Application startup complete.
+event-planner-app  | INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+event-planner-app  | INFO:     172.18.0.1:48254 - "GET /health HTTP/1.1" 200 OK
+event-planner-app  | INFO:     172.18.0.1:48266 - "GET /health HTTP/1.1" 200 OK
+event-planner-app  | INFO:     127.0.0.1:59778 - "GET /health HTTP/1.1" 200 OK
+event-planner-app  | INFO:     127.0.0.1:35666 - "GET /health HTTP/1.1" 200 OK
+event-planner-app  | INFO:     172.18.0.1:46772 - "GET / HTTP/1.1" 404 Not Found
+event-planner-app  | INFO:     172.18.0.1:46786 - "GET /sitemap.xml HTTP/1.1" 404 Not Found
+event-planner-app  | INFO:     172.18.0.1:46776 - "GET /robots.txt HTTP/1.1" 404 Not Found
+event-planner-app  | INFO:     172.18.0.1:46772 - "GET / HTTP/1.1" 404 Not Found
