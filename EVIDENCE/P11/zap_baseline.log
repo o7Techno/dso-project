@@ -1,0 +1,4 @@
+2025-12-16 11:44:26,210 Trigger hook: cli_opts, args: 1
+2025-12-16 11:44:26,211 Using port: 60497
+2025-12-16 11:44:26,211 Trigger hook: load_config, args: 4
+2025-12-16 11:44:26,211 Failed to load config file /zap/wrk/security/zap-baseline.conf Unexpected number of tokens on line - there should be at least 3, tab separated: 10049 IGNORE

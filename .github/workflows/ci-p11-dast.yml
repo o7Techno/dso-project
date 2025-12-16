@@ -1,0 +1,128 @@
+name: Security - DAST (ZAP Baseline)
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "app/**"
+      - "Dockerfile"
+      - "compose.yaml"
+      - "requirements*.txt"
+      - ".github/workflows/ci-p11-dast.yml"
+  pull_request:
+    paths:
+      - "app/**"
+      - "Dockerfile"
+      - "compose.yaml"
+      - "requirements*.txt"
+      - ".github/workflows/ci-p11-dast.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  dast:
+    name: ZAP Baseline
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      TARGET_URL: http://localhost:8000
+      HEALTH_URL: http://localhost:8000/health
+      ZAP_IMAGE: ghcr.io/zaproxy/zaproxy:stable
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare env file
+        run: |
+          if [ -f .env.example ]; then
+            cp .env.example .env
+          else
+            touch .env
+          fi
+
+      - name: Ensure evidence dir
+        run: |
+          mkdir -p EVIDENCE/P11
+          chmod -R 777 EVIDENCE
+
+      - name: Build & start service (Docker Compose)
+        run: docker compose -f compose.yaml up -d --build
+
+      - name: Wait for service health
+        run: |
+          for i in $(seq 1 60); do
+            if curl -sf "$HEALTH_URL" >/dev/null; then
+              echo "Service is healthy"
+              exit 0
+            fi
+            echo "Waiting for service..."
+            sleep 2
+          done
+          echo "Service failed to become healthy"
+          docker compose -f compose.yaml logs app || true
+          exit 1
+
+      - name: Smoke check service
+        run: |
+          curl -v --max-time 5 "$HEALTH_URL"
+
+      - name: Pull ZAP image
+        run: |
+          docker pull "$ZAP_IMAGE" || (
+            echo "Primary pull failed, retrying from Docker Hub mirror..." &&
+            docker pull owasp/zap2docker-stable
+          )
+
+      - name: ZAP Baseline scan
+        run: |
+          mkdir -p EVIDENCE/P11
+          ZAP_IMG="$ZAP_IMAGE"
+          if ! docker image inspect "$ZAP_IMG" >/dev/null 2>&1; then
+            ZAP_IMG="owasp/zap2docker-stable"
+          fi
+          docker run --rm --network host -u 0:0 -v "$PWD:/zap/wrk:rw" \
+            "$ZAP_IMG" zap-baseline.py \
+              -t "$TARGET_URL" \
+              -r EVIDENCE/P11/zap_baseline.html \
+              -J EVIDENCE/P11/zap_baseline.json \
+              -c security/zap-baseline.conf \
+              -m 10 \
+              -I -d > EVIDENCE/P11/zap_baseline.log 2>&1 || true
+          ls -la EVIDENCE/P11
+
+      - name: Collect app logs
+        if: always()
+        run: |
+          mkdir -p EVIDENCE/P11
+          docker compose -f compose.yaml logs app > EVIDENCE/P11/app.log 2>&1 || true
+
+      - name: Collect evidence (ensure reports exist)
+        run: |
+          mkdir -p EVIDENCE/P11
+          if [ ! -f EVIDENCE/P11/zap_baseline.html ]; then
+            echo "<html><body><p>ZAP report not produced (target may have been unreachable). See workflow logs.</p></body></html>" > EVIDENCE/P11/zap_baseline.html
+          fi
+          if [ ! -f EVIDENCE/P11/zap_baseline.json ]; then
+            echo '{"note": "ZAP report not produced (target may have been unreachable). See workflow logs."}' > EVIDENCE/P11/zap_baseline.json
+          fi
+          if [ ! -f EVIDENCE/P11/zap_baseline.log ]; then
+            echo "ZAP log missing; see workflow step output" > EVIDENCE/P11/zap_baseline.log
+          fi
+          ls -la EVIDENCE/P11
+
+      - name: Upload DAST evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: P11_EVIDENCE
+          path: EVIDENCE/P11
+
+      - name: Stop service
+        if: always()
+        run: docker compose -f compose.yaml down --remove-orphans

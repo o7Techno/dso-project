@@ -1,0 +1,20 @@
+# policy/waivers.yml — файл исключений для SBOM & SCA практики
+# См. project/69_sbom-vuln-mgmt.md и docs/security-nfr/NFR_TRACEABILITY.md для деталей политики.
+
+waivers: []
+
+# Документирование фикса уязвимости:
+# Уязвимость GHSA-cxww-7g56-2vh6 была обнаружена в actions/download-artifact@v4 (High severity)
+# и исправлена обновлением до v4.1.3 в коммите <1860f32c48a8d64154ff46d4a94ec8ea4a73b6ba> (см. .github/workflows/ci.yml).
+# После фикса повторный прогон SCA показывает 0 High/Critical уязвимостей.
+#
+# Структура для будущих waivers (когда фикс невозможен):
+# waivers:
+#   - id: "CVE-2025-XXXX"
+#     package: "example-lib"
+#     version: "1.2.3"
+#     severity: "High"
+#     reason: "Транзитивная зависимость; нет официального фикса; компонент не выходит в прод."
+#     issue: "https://github.com/<org>/<repo>/issues/123"
+#     expires_at: "2025-12-31"
+#     approved_by: "security@example.org"
