@@ -1,0 +1,183 @@
+name: Security - IaC & Container (P12)
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - Dockerfile
+      - 'iac/**'
+      - 'k8s/**'
+      - 'deploy/**'
+      - 'compose.yaml'
+      - 'docker-compose.yml'
+      - 'security/**'
+  pull_request:
+    paths:
+      - Dockerfile
+      - 'iac/**'
+      - 'k8s/**'
+      - 'deploy/**'
+      - 'compose.yaml'
+      - 'docker-compose.yml'
+      - 'security/**'
+
+env:
+  IMAGE_NAME: dso-project-app
+  IMAGE_TAG: local
+  REGISTRY: ghcr.io
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  iac-container-security:
+    name: IaC & Container Security Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    permissions:
+      contents: read
+      pull-requests: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        timeout-minutes: 2
+
+      - name: Create evidence directory
+        run: mkdir -p EVIDENCE/P12
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        timeout-minutes: 2
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          tags: ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+        timeout-minutes: 10
+
+      - name: Run Hadolint on Dockerfile
+        id: hadolint
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}:/workspace" \
+            -w /workspace \
+            hadolint/hadolint:latest \
+            hadolint \
+            --config security/hadolint.yaml \
+            --format json \
+            Dockerfile > EVIDENCE/P12/hadolint_report.json || true
+        continue-on-error: true
+
+      - name: Run Checkov on IaC
+        id: checkov
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}:/workspace" \
+            -w /workspace \
+            bridgecrew/checkov:latest \
+            --directory iac/ \
+            --framework kubernetes \
+            --framework dockerfile \
+            --framework docker_compose \
+            --config-file security/checkov.yaml \
+            --output json \
+            --output-file-path EVIDENCE/P12/checkov_report.json || true
+        continue-on-error: true
+
+      - name: Run Checkov on Docker Compose
+        id: checkov-compose
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}:/workspace" \
+            -w /workspace \
+            bridgecrew/checkov:latest \
+            --file compose.yaml \
+            --framework docker_compose \
+            --config-file security/checkov.yaml \
+            --output json \
+            --output-file-path EVIDENCE/P12/checkov_compose_report.json || true
+        continue-on-error: true
+
+      - name: Run Trivy on Docker image
+        id: trivy
+        run: |
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v "${{ github.workspace }}:/workspace" \
+            -w /workspace \
+            aquasec/trivy:latest \
+            image \
+            --format json \
+            --output EVIDENCE/P12/trivy_report.json \
+            --exit-code 0 \
+            ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} || true
+        continue-on-error: true
+
+      - name: Run Trivy filesystem scan on Dockerfile
+        id: trivy-fs
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}:/workspace" \
+            -w /workspace \
+            aquasec/trivy:latest \
+            fs \
+            --format json \
+            --output EVIDENCE/P12/trivy_fs_report.json \
+            --exit-code 0 \
+            . || true
+        continue-on-error: true
+
+      - name: Generate summary reports
+        run: |
+          echo "# P12 Security Scan Summary" > EVIDENCE/P12/scan_summary.md
+          echo "" >> EVIDENCE/P12/scan_summary.md
+          echo "Generated: $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> EVIDENCE/P12/scan_summary.md
+          echo "" >> EVIDENCE/P12/scan_summary.md
+
+          echo "## Hadolint Results" >> EVIDENCE/P12/scan_summary.md
+          if [ -f EVIDENCE/P12/hadolint_report.json ]; then
+            echo "Report generated: $(wc -l < EVIDENCE/P12/hadolint_report.json) lines" >> EVIDENCE/P12/scan_summary.md
+          else
+            echo "Report not generated" >> EVIDENCE/P12/scan_summary.md
+          fi
+          echo "" >> EVIDENCE/P12/scan_summary.md
+
+          echo "## Checkov Results" >> EVIDENCE/P12/scan_summary.md
+          if [ -f EVIDENCE/P12/checkov_report.json ]; then
+            echo "Report generated: $(wc -l < EVIDENCE/P12/checkov_report.json) lines" >> EVIDENCE/P12/scan_summary.md
+          else
+            echo "Report not generated" >> EVIDENCE/P12/scan_summary.md
+          fi
+          echo "" >> EVIDENCE/P12/scan_summary.md
+
+          echo "## Trivy Results" >> EVIDENCE/P12/scan_summary.md
+          if [ -f EVIDENCE/P12/trivy_report.json ]; then
+            echo "Report generated: $(wc -l < EVIDENCE/P12/trivy_report.json) lines" >> EVIDENCE/P12/scan_summary.md
+          else
+            echo "Report not generated" >> EVIDENCE/P12/scan_summary.md
+          fi
+          echo "" >> EVIDENCE/P12/scan_summary.md
+
+      - name: Upload P12 evidence artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: P12_EVIDENCE
+          path: |
+            EVIDENCE/P12/*.json
+            EVIDENCE/P12/*.md
+          retention-days: 90
+          if-no-files-found: warn
+
+      - name: Display scan summary
+        run: |
+          echo "=== P12 Security Scan Summary ==="
+          cat EVIDENCE/P12/scan_summary.md || echo "Summary not available"

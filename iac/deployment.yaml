@@ -1,0 +1,91 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: event-planner-app
+  labels:
+    app: event-planner
+    version: v1
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: event-planner
+  template:
+    metadata:
+      labels:
+        app: event-planner
+        version: v1
+    spec:
+      serviceAccountName: event-planner-sa
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: app
+        image: dso-project-app:v1.0.0
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8000
+          name: http
+          protocol: TCP
+        env:
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        - name: PYTHONDONTWRITEBYTECODE
+          value: "1"
+        - name: HTTP_TIMEOUT_CONNECT
+          value: "1.0"
+        - name: HTTP_TIMEOUT_READ
+          value: "4.0"
+        - name: HTTP_TIMEOUT_WRITE
+          value: "4.0"
+        - name: HTTP_TIMEOUT_POOL
+          value: "5.0"
+        - name: HTTP_MAX_RETRIES
+          value: "2"
+        - name: HTTP_RETRY_BACKOFF_BASE
+          value: "0.1"
+        - name: EXTERNAL_HEALTH_URL
+          value: "https://httpbin.org/status/200"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
+          capabilities:
+            drop:
+              - ALL
+            add:
+              - NET_BIND_SERVICE
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 40
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        volumeMounts:
+        - name: uploads
+          mountPath: /app/uploads
+      volumes:
+      - name: uploads
+        emptyDir:
+          sizeLimit: 100Mi

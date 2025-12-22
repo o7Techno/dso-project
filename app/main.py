@@ -7,7 +7,7 @@ from decimal import Decimal
 from typing import Dict, Optional
 
 import httpx
-from fastapi import FastAPI, File, HTTPException, Request, UploadFile
+from fastapi import FastAPI, File, HTTPException, Request, Response, UploadFile
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -27,6 +27,16 @@ app.add_middleware(
 
 
 CORRELATION_ID_HEADER = "x-correlation-id"
+
+
+@app.middleware("http")
+async def add_cache_control_headers(request: Request, call_next):
+    """Add no-cache headers to all responses to avoid cacheable content alerts."""
+    response: Response = await call_next(request)
+    response.headers.setdefault("Cache-Control", "no-store, no-cache, must-revalidate")
+    response.headers.setdefault("Pragma", "no-cache")
+    response.headers.setdefault("Expires", "0")
+    return response
 
 
 class CorrelationIdMiddleware(BaseHTTPMiddleware):
@@ -142,6 +152,33 @@ async def validation_error_handler(request: Request, exc: ValidationError):
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+@app.get("/robots.txt")
+def robots():
+    return Response(
+        content="User-agent: *\nDisallow: /",
+        media_type="text/plain",
+        headers={
+            "Cache-Control": "no-store, no-cache, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0",
+        },
+    )
+
+
+@app.get("/sitemap.xml")
+def sitemap():
+    xml = '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>'
+    return Response(
+        content=xml,
+        media_type="application/xml",
+        headers={
+            "Cache-Control": "no-store, no-cache, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0",
+        },
+    )
 
 
 _DB = {"items": [], "events": []}

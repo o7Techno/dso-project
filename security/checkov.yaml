@@ -1,0 +1,33 @@
+# Checkov configuration for IaC security scanning
+# See: https://www.checkov.io/
+
+# Framework to scan
+framework:
+  - dockerfile
+  - docker_compose
+  - kubernetes
+  - general
+
+# Skip checks (add specific check IDs if needed)
+# skip-check:
+#   - CKV_DOCKER_1  # Example: skip specific check
+
+# Include/exclude paths
+# include:
+#   - iac/
+#   - k8s/
+#   - compose.yaml
+
+# Exclude paths
+# exclude:
+#   - "**/*.md"
+#   - "**/test/**"
+
+# Output format
+output: json
+
+# Severity threshold (optional)
+# soft-fail: false
+
+# Baseline (optional - for tracking new issues)
+# baseline: EVIDENCE/P12/checkov_baseline.json

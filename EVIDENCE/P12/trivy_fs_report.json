@@ -1,0 +1,67 @@
+{
+  "SchemaVersion": 2,
+  "ReportID": "019b46e0-d2d5-789a-a6fc-8f2803b9d081",
+  "CreatedAt": "2025-12-22T16:24:57.813564635Z",
+  "ArtifactID": "sha256:74ddf2b8ebb53dde13c0e6559c63e8c6d522c528483ba3d3840c71bb30929d22",
+  "ArtifactName": ".",
+  "ArtifactType": "repository",
+  "Metadata": {
+    "RepoURL": "https://github.com/o7Techno/dso-project",
+    "Branch": "p12-iac-container",
+    "Commit": "b31be60c5d807c6db0aafda786cdd1dc87aaf713",
+    "CommitMsg": "feat: iac \u0026 container security",
+    "Author": "DenKo \u003cnagibator2042@gmail.com\u003e",
+    "Committer": "DenKo \u003cnagibator2042@gmail.com\u003e"
+  },
+  "Results": [
+    {
+      "Target": "requirements.txt",
+      "Class": "lang-pkgs",
+      "Type": "pip",
+      "Packages": [
+        {
+          "Name": "fastapi",
+          "Identifier": {
+            "PURL": "pkg:pypi/fastapi@0.112.2",
+            "UID": "903ca4fc39714d23"
+          },
+          "Version": "0.112.2",
+          "Locations": [
+            {
+              "StartLine": 1,
+              "EndLine": 1
+            }
+          ]
+        },
+        {
+          "Name": "httpx",
+          "Identifier": {
+            "PURL": "pkg:pypi/httpx@0.27.2",
+            "UID": "6da7ff4b19a63f9"
+          },
+          "Version": "0.27.2",
+          "Locations": [
+            {
+              "StartLine": 4,
+              "EndLine": 4
+            }
+          ]
+        },
+        {
+          "Name": "uvicorn",
+          "Identifier": {
+            "PURL": "pkg:pypi/uvicorn@0.30.5",
+            "UID": "7c6c810caf4136d2"
+          },
+          "Version": "0.30.5",
+          "Locations": [
+            {
+              "StartLine": 2,
+              "EndLine": 2
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
