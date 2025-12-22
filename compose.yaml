@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: dso-project-app:latest
+    image: dso-project-app:${IMAGE_TAG:-v1.0.0}
     container_name: event-planner-app
     ports:
       - "${APP_PORT:-8000}:8000"

@@ -1,0 +1,37 @@
+# Trivy configuration for container image scanning
+# See: https://aquasecurity.github.io/trivy/
+
+# Severity levels to report
+severity:
+  - UNKNOWN
+  - LOW
+  - MEDIUM
+  - HIGH
+  - CRITICAL
+
+# Exit code when vulnerabilities are found
+exit-code: 0  # Don't fail the build, just report
+
+# Format
+format: json
+
+# Ignore unfixed vulnerabilities (optional)
+# ignore-unfixed: false
+
+# Skip database update (optional - for faster runs)
+# skip-db-update: false
+
+# Skip Java DB update (optional)
+# skip-java-db-update: false
+
+# Ignore file (optional - for known false positives)
+# ignorefile: .trivyignore
+
+# Security checks
+security-checks:
+  - vuln
+  - config
+
+# Additional options
+# no-progress: true
+# quiet: false

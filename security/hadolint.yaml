@@ -1,0 +1,21 @@
+# Hadolint configuration for Dockerfile linting
+# See: https://github.com/hadolint/hadolint/wiki
+
+# Ignore rules that are not relevant for this project
+ignore:
+  # DL3008: Pin versions in apt-get install (we use --no-install-recommends)
+  - DL3008
+  # DL3009: Delete the apt-get lists after installing (we do this with rm -rf)
+  - DL3009
+  # DL3015: Avoid additional packages by using --no-install-recommends (we use it)
+  - DL3015
+  # DL3059: Multiple consecutive `RUN` instructions (we combine them)
+  - DL3059
+
+# Trusted registries (if needed)
+# trustedRegistries:
+#   - docker.io
+#   - registry.example.com
+
+# Failure threshold (optional)
+# failureThreshold: warning
